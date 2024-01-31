@@ -1,6 +1,6 @@
 import { Zora1155ABI } from '@/abi/Zora1155';
 import { CHAIN, CONTRACT_ADDRESS, SITE_URL, TOKEN_ID } from '@/config';
-import { kv } from '@vercel/kv';
+// import { kv } from '@vercel/kv';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   Address,
@@ -11,9 +11,9 @@ import {
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 
-const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY;
-const MINTER_PRIVATE_KEY = process.env.MINTER_PRIVATE_KEY as Hex | undefined;
-const HAS_KV = !!process.env.KV_URL;
+const NEYNAR_API_KEY = process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
+const MINTER_PRIVATE_KEY = process.env.NEXT_PUBLIC_MINTER_PRIVATE_KEY as Hex | undefined;
+// const HAS_KV = !!process.env.KV_URL;
 
 const transport = http(process.env.RPC_URL);
 
@@ -61,13 +61,13 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
 
     // Check if user has minted before
-    if (HAS_KV) {
-      const prevMintHash = await kv.get<Hex>(`mint:${address}`);
+    // if (HAS_KV) {
+    //   const prevMintHash = await kv.get<Hex>(`mint:${address}`);
 
-      if (prevMintHash) {
-        return getResponse(ResponseType.ALREADY_MINTED);
-      }
-    }
+    //   if (prevMintHash) {
+    //     return getResponse(ResponseType.ALREADY_MINTED);
+    //   }
+    // }
 
     // Check if user has a balance
     const balance = await publicClient.readContract({
@@ -96,9 +96,11 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     const hash = await walletClient.writeContract(request);
 
-    if (HAS_KV) {
-      await kv.set(`mint:${address}`, hash);
-    }
+    console.log(`Minted token ${TOKEN_ID} for ${address} with hash ${hash}`);
+
+    // if (HAS_KV) {
+    //   await kv.set(`mint:${address}`, hash);
+    // }
 
     return getResponse(ResponseType.SUCCESS);
   } catch (error) {
