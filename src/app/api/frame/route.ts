@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   Address,
   Hex,
-  TransactionExecutionError,
   createPublicClient,
   createWalletClient,
   http,
@@ -13,9 +12,7 @@ import {
 import { privateKeyToAccount } from 'viem/accounts';
 
 const NEYNAR_API_KEY = process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
-const MINTER_PRIVATE_KEY = process.env.NEXT_PUBLIC_MINTER_PRIVATE_KEY as
-  | Hex
-  | undefined;
+const MINTER_PRIVATE_KEY = process.env.NEXT_PUBLIC_MINTER_PRIVATE_KEY as Hex | undefined;
 // const HAS_KV = !!process.env.KV_URL;
 
 const transport = http(process.env.RPC_URL);
@@ -97,20 +94,9 @@ export async function POST(req: NextRequest): Promise<Response> {
       throw new Error('Could not simulate contract');
     }
 
-    try {
-      const hash = await walletClient.writeContract(request);
+    const hash = await walletClient.writeContract(request);
 
-      // if (HAS_KV) {
-      //   await kv.set(`mint:${address}`, hash);
-      // }
-    } catch (error) {
-      if (
-        error instanceof TransactionExecutionError &&
-        error.details.startsWith('gas required exceeds allowance')
-      ) {
-        return getResponse(ResponseType.OUT_OF_GAS);
-      }
-    }
+    console.log(`Minted token ${TOKEN_ID} for ${address} with hash ${hash}`);
 
     // if (HAS_KV) {
     //   await kv.set(`mint:${address}`, hash);
@@ -128,7 +114,6 @@ enum ResponseType {
   RECAST,
   ALREADY_MINTED,
   NO_ADDRESS,
-  OUT_OF_GAS,
   ERROR,
 }
 
@@ -138,7 +123,6 @@ function getResponse(type: ResponseType) {
     [ResponseType.RECAST]: 'status/recast.png',
     [ResponseType.ALREADY_MINTED]: 'status/already-minted.png',
     [ResponseType.NO_ADDRESS]: 'status/no-address.png',
-    [ResponseType.OUT_OF_GAS]: 'status/out-of-gas.png',
     [ResponseType.ERROR]: 'status/error.png',
   }[type];
   const shouldRetry =
